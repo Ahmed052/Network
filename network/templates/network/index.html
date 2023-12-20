@@ -14,14 +14,53 @@
 
     {% endif %}
 
-    <div class="all-posts">
-        {% for post in allPosts %}
-            <div class=" rows post">
-                <h5 class="username">@{{ post.user }}</div>
-                <h6 class="content">{{ post.content }}</div>
-                <p class="date">{{ post.date }}</div>
+    <div class="all-posts mx-3">
+        {% for post in posts_of_the_page %}
+            <div class="rows post">
+                <h5 class="username"><a href="{% url 'profile' user_id=post.user.id %}">@{{ post.user }}</a></h5>
+                <h6 class="content">{{ post.content }}</h6>
+                <p class="date">{{ post.date }}</p>
+                {% if user.is_authenticated %}
+                    {% if user == post.user %}
+                        <div class="d-flex justify-content-center">
+                            <button class="btn btn-primary my-4" id="edit-btn" data-toggle="modal" data-target="#model_edit_post_{{ post.id }}">Edit</button>
+
+                        </div>
+                        <div class="modal fade" id="#model_edit_post_{{ post.id }}" tabindex="-1" role="dialog" aria-labelledby="#model_edit_post_{{ post.id }}_label" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                              <div class="modal-content">
+                                <div class="modal-header">
+                                  <h5 class="modal-title">edit posts</h5>
+                                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                  </button>
+                                </div>
+                                <div class="modal-body">
+                                  <p>Modal body text goes here.</p>
+                                </div>
+                                <div class="modal-footer">
+                                  <button type="button" class="btn btn-primary">Save changes</button>
+                                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                    {% endif %}
+                {% endif %}
+
             </div>
             
         {% endfor %}
     </div>
+
+    <nav aria-label="Page navigation example">
+        <ul class="pagination d-flex justify-content-center">
+            {% if posts_of_the_page.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ posts_of_the_page.previous_page_number }}">Previous</a></li>
+            {% endif %}
+            {% if posts_of_the_page.has_next %}
+              <li class="page-item"><a class="page-link" href="?page={{ posts_of_the_page.next_page_number }}">Next</a></li>
+              {% endif %}
+        </ul>
+    </nav>
 {% endblock %}

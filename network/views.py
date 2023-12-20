@@ -3,14 +3,23 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+from django.core.paginator import Paginator
 
-from .models import User, Post
+from .models import User, Post, Follow
 
 
 def index(request):
     allPosts=Post.objects.all().order_by("id").reverse()
+
+
+    paginator=Paginator(allPosts, 1)
+    page_number=request.GET.get('page')
+    posts_of_the_page=paginator.get_page(page_number)
+
     return render(request, "network/index.html",{
-        "allPosts": allPosts
+        "allPosts": allPosts,
+        "posts_of_the_page": posts_of_the_page,
+
     })
 
 def newPost(request):
@@ -20,7 +29,75 @@ def newPost(request):
         post=Post(content=content, user=user)
         post.save()
         return HttpResponseRedirect(reverse(index))
+    
+def profile(request, user_id):
+    user=User.objects.get(pk=user_id)
+    allPosts=Post.objects.filter(user=user).order_by("id").reverse()
+    
+    following=Follow.objects.filter(user=user)
+    followers=Follow.objects.filter(user_follower=user)
 
+    try:
+        checkFollow=followers.filter(user=User.objects.get(pk=request.user.id))
+        if len(checkFollow) != 0:
+            isFollowing=True
+        else:
+            isFollowing=False
+    except:
+        isFollowing=False
+
+    paginator=Paginator(allPosts, 10)
+    page_number=request.GET.get('page')
+    posts_of_the_page=paginator.get_page(page_number)
+
+    return render(request, "network/profile.html",{
+        "allPosts": allPosts,
+        "posts_of_the_page": posts_of_the_page,
+        "username": user.username,
+        "following":following,
+        "followers": followers,
+        "isFollowing": isFollowing,
+        "user_profile":user,
+
+    })
+
+def following(request):
+    currentUser=User.objects.get(pk=request.user.id)
+    followingPeople= Follow.objects.filter(user=currentUser)
+    allPosts=Post.objects.all().order_by('id').reverse()
+
+    followingPosts=[]
+    for post in allPosts:
+        for person in followingPeople:
+            if person.user_follower == post.user:
+                followingPosts.append(post)
+
+    paginator=Paginator(followingPosts, 10)
+    page_number=request.GET.get('page')
+    posts_of_the_page=paginator.get_page(page_number)
+
+    return render(request, "network/following.html",{
+        "posts_of_the_page": posts_of_the_page,
+
+    })
+
+def follow(request):
+    userfollow=request.POST['userfollow']
+    currentUser=User.objects.get(pk=request.user.id)
+    userfollowData=User.objects.get(username=userfollow)
+    f=Follow(user=currentUser, user_follower=userfollowData)
+    f.save()
+    user_id=userfollowData.id
+    return HttpResponseRedirect(reverse(profile, kwargs={'user_id': user_id}))
+
+def unfollow(request):
+    userfollow=request.POST['userfollow']
+    currentUser=request.user
+    userfollowData=User.objects.get(username=userfollow)
+    f=Follow.objects.get(user=currentUser, user_follower=userfollowData)
+    f.delete()
+    user_id=userfollowData.id
+    return HttpResponseRedirect(reverse(profile, kwargs={'user_id':user_id}))
 
 def login_view(request):
     if request.method == "POST":
