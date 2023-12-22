@@ -90,13 +90,14 @@ def register(request):
 
 def edit(request, post_id):
     if request.method=="POST":
-        data= json.loads(request.body)
-        edit_post=Post.objects.get(pk=post_id)
-        edit_post.content=data["content"]
-        edit_post.save()
-        return JsonResponse({"message": " the change succesful" , "data": data["content"]})
+        post = Post.objects.get(pk=post_id)
+        
+        data= json.loads(request.body).get("content")
+        post.content=data
+        post.save()
+        return JsonResponse({"stat": "Success" , "content": data})
     else:
-        return JsonResponse({"message": " invalid request method " })
+        return JsonResponse({"stat": "Unsuccess" })
     
     
 def newPost(request):

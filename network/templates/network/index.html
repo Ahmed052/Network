@@ -68,6 +68,40 @@
             }
             liked = !liked
         }
+
+        function edit(post_id){
+            fetch(`/edit/${post_id}`, {
+                method: "POST",
+                headers: {"content-type": "application/json", 
+                "x-CSRFToken": getCookie("csrftoken")},
+                body: JSON.stringify({
+                    content: document.getElementById(`textarea_${post_id}`).value
+                })
+            
+            })
+            .then(response => response.json())
+            .then(result =>{
+                if(result.stat == "Success"){
+                    document.getElementById(`content_${post_id}`).innerHTML = result.content;
+                    document.getElementById(`modal_edit_post_${post_id}`).classList.remove('show');
+                    document.getElementById(`modal_edit_post_${post_id}`).setAttribute('aria-hidden', 'true');
+                    document.getElementById(`modal_edit_post_${post_id}`).setAttribute('style', 'display: none');
+            
+                    
+                    const modalsBackdrops = document.getElementsByClassName('modal-backdrop');
+
+            
+                    for(let i=0; i<modalsBackdrops.length; i++) {
+                        document.body.removeChild(modalsBackdrops[i]);
+                    }
+                }
+                else{
+                    alert(result.data);
+                }
+            })
+
+        }
+
     </script>
 
 
@@ -110,10 +144,14 @@
                                 <div class="modal-body">
                                   <textarea id="textarea_{{ post.id }}" class="form-control" name="content" rows="7">{{ post.content }}</textarea>
                                 </div>
-                                <div class="modal-footer">
-                                  <button type="button" class="btn btn-primary" on-click="likedHandler({{ post.id }})">Save changes</button>
+                                <form method="POST" onsubmit="return false;">
+                                    {% csrf_token %}
+                                 <div class="modal-footer">
+                                  <button type="submit" class="btn btn-primary" onclick="edit('{{post.id}}')">Save changes</button>
                                   <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                </div>
+                                  </div>
+                                </form>
+                               
                               </div>
                             </div>
                         </div>
